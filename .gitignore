@@ -1,0 +1,7 @@
+/template
+/node_modules
+/.vscode
+test
+*.log
+.env
+*.DS_Store
