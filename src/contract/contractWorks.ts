@@ -4,6 +4,7 @@ import appConfig from '../configs/app.config'
 import fs from 'fs'
 import Web3 from 'web3'
 import { AbiItem } from 'web3-utils'
+import secp256k1 from 'secp256k1'
 
 const chainId = 4
 const contractAddress = appConfig.contract_address
@@ -19,7 +20,7 @@ export const init = async () => {
     const signerAddressPrivateKey = ENV.SIGNER_ADDRESS_PRIVATE_KEY
 
     const amount = "10000000000000000000"
-    const nonce = 1 // номер withdraw
+    const nonce = 0 // номер withdraw
 
     console.log('input info'.blue(), {
         reciever: reciever,
@@ -35,13 +36,14 @@ export const init = async () => {
 
     console.log('get coupon signer'.blue())
     const couponSigner = await contract.methods.getCouponSigner().call({})
+
     console.log(`couponSigner ${couponSigner}`)
     if (couponSigner != signerAddress)
         return
 
     // 1. Get hash
     console.log('get coupon hash'.blue())
-    const hash = await contract.methods.packCoupon(
+    const hash = await contract.methods.couponHash(
         reciever,
         amount,
         nonce,
@@ -52,8 +54,11 @@ export const init = async () => {
 
     // 2. Sign hash
     console.log('sign coupon hash'.blue())
-    const signed = web3.eth.accounts.sign(hash, signerAddressPrivateKey)
+    const ecdsaSign = secp256k1.ecdsaSign(fromHexString(hash)!, fromHexString(signerAddressPrivateKey)!)
+    const signed = ecsign(ecdsaSign)
     console.log('signed hash', signed)
+
+    // return
 
     // 3. Make 
     const txDataWithdraw = await contract.methods.withdraw(
@@ -110,4 +115,18 @@ const getAbi = () => {
 export const getContract = (abi: AbiItem[]) => {
     const contract = new web3.eth.Contract(abi, contractAddress)
     return contract
+}
+
+const fromHexString = (hexString: string) => {
+    const value = hexString.replace('0x', '').match(/.{1,2}/g)?.map((byte) => parseInt(byte, 16))
+    if (!value) return undefined
+    return Uint8Array.from(value)
+}
+
+const ecsign = (sig: any) => {
+    return {
+        r: sig.signature.slice(0, 32),
+        s: sig.signature.slice(32, 64),
+        v: sig.recid + 27
+    }
 }
