@@ -13,14 +13,14 @@ var web3 = new Web3(new Web3.providers.WebsocketProvider(`${ENV.PROVIDER_URL}${E
 export const init = async () => {
     const contract = getContract(getAbi())
 
-    const reciever = ENV.ADDRESS // получатель денег
-    const recieverPrivateKey = ENV.ADDRESS_PRIVATE_KEY // приват ключ получателя 
+    const reciever = ENV.ADDRESS 
+    const recieverPrivateKey = ENV.ADDRESS_PRIVATE_KEY
 
     const signerAddress = ENV.SIGNER_ADDRESS
     const signerAddressPrivateKey = ENV.SIGNER_ADDRESS_PRIVATE_KEY
 
     const amount = "10000000000000000000"
-    const nonce = 0 // номер withdraw
+    const nonce = 0 // the nonce of widthdraw
 
     console.log('input info'.blue(), {
         reciever: reciever,
